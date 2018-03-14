@@ -46,16 +46,13 @@ source_custom = ColumnDataSource(data=data_custom)
 pdf_col = 'DarkBlue'
 cdf_col = 'YellowGreen'
 tools = "pan,wheel_zoom,box_zoom,reset,save"
-hover = HoverTool(
-    tooltips=[("(x,y)", "($x, $y)")],
-    # display a tooltip whenever the cursor is vertically in line with a glyph
-    mode='vline'
-)
+
+
 
 # uniform distribution
 plot_uniform = figure(title='Uniform distribution', plot_height=300, plot_width=450,
                       toolbar_location="below", tools=tools, x_range=(-1,2))
-plot_uniform.add_tools(hover)
+
 #plot_uniform.background_fill_color = "SeaShell"
 #plot_uniform.background_fill_alpha = 0.1
 plot_uniform.border_fill_color = "whitesmoke"
@@ -71,6 +68,21 @@ uni_func_cdf = plot_uniform.line(x='x', y='y_cdf', source=source_uniform,
                                  color=cdf_col, line_width=3, legend='cdf',
                                  muted_color=cdf_col, muted_alpha=0.35,
                                  line_dash='dashed')
+hover_pdf = HoverTool(
+    renderers=[uni_func_pdf],
+    tooltips=[('(x, y_pdf)', '($x, @y_pdf)')],
+    # display a tooltip whenever the cursor is vertically in line with a glyph
+    mode='vline'
+)
+hover_cdf = HoverTool(
+    renderers=[uni_func_cdf],
+    tooltips=[('(x, y_cdf)', '($x, @y_cdf)')],
+    # display a tooltip whenever the cursor is vertically in line with a glyph
+    mode='vline'
+)
+plot_uniform.add_tools(hover_pdf)
+plot_uniform.add_tools(hover_cdf)
+
 plot_uniform.legend.click_policy='mute'
 
 # uniform widgets
@@ -80,7 +92,7 @@ sld_uni_ab = RangeSlider(start=r_uni_ab[0], end=r_uni_ab[1], value=(d_uni_a, d_u
 # custom distribution
 plot_custom = figure(title='Erlang distribution', plot_height=300, plot_width=450,
                      toolbar_location="below", tools=tools, x_range=(-1,10))
-plot_custom.add_tools(hover)
+
 #plot_custom.background_fill_color = "SeaShell"
 #plot_custom.background_fill_alpha = 0.1
 plot_custom.border_fill_color = "whitesmoke"
@@ -96,6 +108,21 @@ cust_func_cdf = plot_custom.line(x='x', y='y_cdf', source=source_custom,
                                  color=cdf_col, line_width=3, legend='cdf',
                                  muted_color=cdf_col, muted_alpha=0.35,
                                  line_dash='dashed')
+hover_pdf = HoverTool(
+    renderers=[cust_func_pdf],
+    tooltips=[('(x, y_pdf)', '($x, @y_pdf)')],
+    # display a tooltip whenever the cursor is vertically in line with a glyph
+    mode='vline'
+)
+hover_cdf = HoverTool(
+    renderers=[cust_func_cdf],
+    tooltips=[('(x, y_cdf)', '($x, @y_cdf)')],
+    # display a tooltip whenever the cursor is vertically in line with a glyph
+    mode='vline'
+)
+plot_custom.add_tools(hover_pdf)
+plot_custom.add_tools(hover_cdf)
+
 plot_custom.legend.click_policy='mute'
 
 # custom widgets
