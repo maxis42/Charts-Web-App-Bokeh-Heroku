@@ -23,7 +23,7 @@ d_erl_k, r_erl_k = 1, [1, 20, 1] # k
 d_erl_teta, r_erl_teta = 1, [0.1, 20, 0.1] # k
 
 
-x = np.linspace(d_xmin, d_xmax, N)
+x = np.linspace(d_xmin, d_xmax, d_N)
 y_uni_pdf = uniform.pdf(x, loc=d_uni_a, scale=(d_uni_b - d_uni_a))
 y_uni_cdf = uniform.cdf(x, loc=d_uni_a, scale=(d_uni_b - d_uni_a))
 
@@ -37,8 +37,8 @@ data_uniform = {'x': x,
 source_uniform = ColumnDataSource(data=data_uniform)
 
 data_custom = {'x': x,
-                'y_pdf': y_cust_pdf,
-                'y_cdf': y_cust_cdf}
+               'y_pdf': y_cust_pdf,
+               'y_cdf': y_cust_cdf}
 
 source_custom = ColumnDataSource(data=data_custom)
 
@@ -105,41 +105,41 @@ sld_cust_teta = Slider(start=r_erl_teta[0], end=r_erl_teta[1], value=d_erl_teta,
 
 
 def update_uniform_data(attrname, old, new):
-	xmin, xmax = sld_uni_xminmax.value
-	a, b = sld_uni_ab.value
-	scale = b - a
-	
-	x = np.linspace(xmin, xmax, N)
-	y_uni_pdf = uniform.pdf(x, loc=a, scale=scale)
-	y_uni_cdf = uniform.cdf(x, loc=a, scale=scale)
-	
-	data_uniform = {'x': x,
-                'y_pdf': y_uni_pdf,
-                'y_cdf': y_uni_cdf}
+    xmin, xmax = sld_uni_xminmax.value
+    a, b = sld_uni_ab.value
+    scale = b - a
+    
+    x = np.linspace(xmin, xmax, d_N)
+    y_uni_pdf = uniform.pdf(x, loc=a, scale=scale)
+    y_uni_cdf = uniform.cdf(x, loc=a, scale=scale)
+    
+    data_uniform = {'x': x,
+                    'y_pdf': y_uni_pdf,
+                    'y_cdf': y_uni_cdf}
 
-	source_uniform.data = data_uniform
-	
+    source_uniform.data = data_uniform
+
 def update_custom_data(attrname, old, new):
-	xmin, xmax = sld_cust_xminmax.value
-	k = sld_cust_k.value
-	teta = sld_cust_teta.value
-	
-	x = np.linspace(xmin, xmax, N)
-	y_cust_pdf = erlang.pdf(x, a=k, scale=teta)
-	y_cust_cdf = erlang.cdf(x, a=k, scale=teta)
-	
-	data_custom = {'x': x,
-					'y_pdf': y_cust_pdf,
-					'y_cdf': y_cust_cdf}
+    xmin, xmax = sld_cust_xminmax.value
+    k = sld_cust_k.value
+    teta = sld_cust_teta.value
+    
+    x = np.linspace(xmin, xmax, d_N)
+    y_cust_pdf = erlang.pdf(x, a=k, scale=teta)
+    y_cust_cdf = erlang.cdf(x, a=k, scale=teta)
+    
+    data_custom = {'x': x,
+                   'y_pdf': y_cust_pdf,
+                   'y_cdf': y_cust_cdf}
 
-	source_custom.data = data_custom
-	
+    source_custom.data = data_custom
+
 for w in [sld_uni_xminmax, sld_uni_ab]:
     w.on_change('value', update_uniform_data)
-	
+
 for w in [sld_cust_xminmax, sld_cust_k, sld_cust_teta]:
     w.on_change('value', update_custom_data)
-	
+
 curdoc().add_root(layout([
         [plot_uniform, plot_custom],
         [widgetbox([sld_uni_xminmax, sld_uni_ab]), widgetbox([sld_cust_xminmax, sld_cust_k, sld_cust_teta])]
