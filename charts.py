@@ -1,9 +1,9 @@
 import numpy as np
 from scipy.stats import uniform, erlang
-from bokeh.io import curdoc, show, output_file, push_notebook, output_notebook
+from bokeh.io import curdoc, show
 from bokeh.models import ColumnDataSource
 from bokeh.layouts import gridplot, layout, row, column, widgetbox
-from bokeh.models.widgets import Slider, RangeSlider, TextInput
+from bokeh.models.widgets import Button, Slider, RangeSlider, TextInput
 from bokeh.plotting import figure
 from bokeh.models import HoverTool
 
@@ -14,161 +14,208 @@ from bokeh.models import HoverTool
 ### may be modified without concern, if required. ("View" Part 1)         ###
 ###-----------------------------------------------------------------------###
 # The format for this section is: default, range[Lower, Upper, Step Size]
-d_N = 5000 # number of points
-d_xmin, d_xmax, r_xminmax = -10, 10, [-100, 100, 0.1] # data will be generated for [xmin, xmax]
+
+# number of points
+d_N = 10000
+# data will be generated for [xmin, xmax]
+d_xmin, d_xmax, r_xminmax = -10, 10, [-100, 100, 0.1]
+
 # uniform distribution parameters
-d_uni_a, d_uni_b, r_uni_ab = 0, 1, [-20, 20, 0.1] # a, b
+# a, b
+d_uni_a, d_uni_b, r_uni_ab = 0, 1, [-20, 20, 0.1]
+
 # erlang distribution parameters
-d_erl_k, r_erl_k = 1, [1, 20, 1] # k
-d_erl_teta, r_erl_teta = 1, [0.1, 20, 0.1] # k
+# k
+d_cust_k, r_cust_k = 1, [1, 20, 1]
+# teta
+d_cust_teta, r_cust_teta = 1, [0.1, 20, 0.1]
 
 
-x = np.linspace(d_xmin, d_xmax, d_N)
-y_uni_pdf = uniform.pdf(x, loc=d_uni_a, scale=(d_uni_b - d_uni_a))
-y_uni_cdf = uniform.cdf(x, loc=d_uni_a, scale=(d_uni_b - d_uni_a))
 
-y_cust_pdf = erlang.pdf(x, a=d_erl_k, scale=d_erl_teta)
-y_cust_cdf = erlang.cdf(x, a=d_erl_k, scale=d_erl_teta)
+###-----------------------------------------------------------------------###
+###----------------------GRAPHICAL USER INTERFACE-------------------------###
+### This code defines the Bokeh controls that are used for the user       ###
+### interface. All the defaults for the controls are above. This code     ###
+### should not need to be modified. ("View" Part 2)                       ###
+###-----------------------------------------------------------------------###
+def create_plot_distribution(title, source):
+    # tools for plot manipulations
+    tools = "pan,wheel_zoom,box_zoom,reset,save"
 
-data_uniform = {'x': x,
-                'y_pdf': y_uni_pdf,
-                'y_cdf': y_uni_cdf}
+    # create plot figure
+    plot_figure = figure(title=title, plot_height=300, plot_width=450,
+        toolbar_location="below", tools=tools, x_range=(-1,2))
 
-source_uniform = ColumnDataSource(data=data_uniform)
+    # plot properties
+    #plot_figure.background_fill_color = "SeaShell"
+    #plot_figure.background_fill_alpha = 0.1
+    plot_figure.border_fill_color = "whitesmoke"
+    plot_figure.border_fill_alpha = 0.5
+    plot_figure.min_border_left = 40
+    plot_figure.min_border_right = 40
+    plot_figure.xaxis.axis_label = "x"
+    plot_figure.yaxis.axis_label = "f(x)"
 
-data_custom = {'x': x,
-               'y_pdf': y_cust_pdf,
-               'y_cdf': y_cust_cdf}
+    # create pdf and cdf lines for distribution
+    pdf_line_color = 'DarkBlue'
+    cdf_line_color = 'YellowGreen'
+    line_pdf = plot_figure.line(x='x', y='y_pdf', source=source,
+        color=pdf_line_color, line_width=3, legend='pdf',
+        muted_color=pdf_line_color, muted_alpha=0.2)
+    line_cdf = plot_figure.line(x='x', y='y_cdf', source=source,
+        color=cdf_line_color, line_width=3, legend='cdf',
+        muted_color=cdf_line_color, muted_alpha=0.2,
+        line_dash='dashed')
 
-source_custom = ColumnDataSource(data=data_custom)
+    # create custom HoverTools separately for pdf and cdf
+    hover_pdf = HoverTool(
+        renderers=[line_pdf],
+        tooltips=[('(x, y_pdf)', '($x, @y_pdf)')],
+        mode='vline'
+    )
+    hover_cdf = HoverTool(
+        renderers=[line_cdf],
+        tooltips=[('(x, y_cdf)', '($x, @y_cdf)')],
+        mode='vline'
+    )
+    plot_figure.add_tools(hover_pdf)
+    plot_figure.add_tools(hover_cdf)
 
-# set up plot
-pdf_col = 'DarkBlue'
-cdf_col = 'YellowGreen'
-tools = "pan,wheel_zoom,box_zoom,reset,save"
+    # make possible to turn off charts by clicking on its legend
+    plot_figure.legend.click_policy='mute'
+    return plot_figure
+
+button_reset = Button(label="Reset charts")
 
 
+
+###-----------------------------------------------------------------------###
+###------------------DATA SOURCES AND INITIALIZATION----------------------###
+### This section defines the data sources which will be used in the Bokeh ###
+### plots. To update a Bokeh plot in the server, each of the sources will ###
+### be modified in the CALLBACKS section. ("Model")                       ###
+###-----------------------------------------------------------------------###
+# x data
+d_x = np.linspace(d_xmin, d_xmax, d_N)
 
 # uniform distribution
-plot_uniform = figure(title='Uniform distribution', plot_height=300, plot_width=450,
-                      toolbar_location="below", tools=tools, x_range=(-1,2))
-
-#plot_uniform.background_fill_color = "SeaShell"
-#plot_uniform.background_fill_alpha = 0.1
-plot_uniform.border_fill_color = "whitesmoke"
-plot_uniform.border_fill_alpha = 0.5
-plot_uniform.min_border_left = 40
-plot_uniform.min_border_right = 40
-plot_uniform.xaxis.axis_label = "x"
-plot_uniform.yaxis.axis_label = "f(x)"
-uni_func_pdf = plot_uniform.line(x='x', y='y_pdf', source=source_uniform,
-                                 color=pdf_col, line_width=3, legend='pdf',
-                                 muted_color=pdf_col, muted_alpha=0.35)
-uni_func_cdf = plot_uniform.line(x='x', y='y_cdf', source=source_uniform,
-                                 color=cdf_col, line_width=3, legend='cdf',
-                                 muted_color=cdf_col, muted_alpha=0.35,
-                                 line_dash='dashed')
-hover_pdf = HoverTool(
-    renderers=[uni_func_pdf],
-    tooltips=[('(x, y_pdf)', '($x, @y_pdf)')],
-    # display a tooltip whenever the cursor is vertically in line with a glyph
-    mode='vline'
-)
-hover_cdf = HoverTool(
-    renderers=[uni_func_cdf],
-    tooltips=[('(x, y_cdf)', '($x, @y_cdf)')],
-    # display a tooltip whenever the cursor is vertically in line with a glyph
-    mode='vline'
-)
-plot_uniform.add_tools(hover_pdf)
-plot_uniform.add_tools(hover_cdf)
-
-plot_uniform.legend.click_policy='mute'
-
-# uniform widgets
-sld_uni_xminmax = RangeSlider(start=r_xminmax[0], end=r_xminmax[1], value=(d_xmin, d_xmax), step=r_xminmax[2], title='[xmin, xmax]', width=450)
-sld_uni_ab = RangeSlider(start=r_uni_ab[0], end=r_uni_ab[1], value=(d_uni_a, d_uni_b), step=r_uni_ab[2], title='[a, b]', width=450)
+d_y_uni_pdf = uniform.pdf(d_x, loc=d_uni_a, scale=(d_uni_b - d_uni_a))
+d_y_uni_cdf = uniform.cdf(d_x, loc=d_uni_a, scale=(d_uni_b - d_uni_a))
 
 # custom distribution
-plot_custom = figure(title='Erlang distribution', plot_height=300, plot_width=450,
-                     toolbar_location="below", tools=tools, x_range=(-1,10))
+d_y_cust_pdf = erlang.pdf(d_x, a=d_cust_k, scale=d_cust_teta)
+d_y_cust_cdf = erlang.cdf(d_x, a=d_cust_k, scale=d_cust_teta)
 
-#plot_custom.background_fill_color = "SeaShell"
-#plot_custom.background_fill_alpha = 0.1
-plot_custom.border_fill_color = "whitesmoke"
-plot_custom.border_fill_alpha = 0.5
-plot_custom.min_border_left = 40
-plot_custom.min_border_right = 40
-plot_custom.xaxis.axis_label = "x"
-plot_custom.yaxis.axis_label = "f(x)"
-cust_func_pdf = plot_custom.line(x='x', y='y_pdf', source=source_custom,
-                                 color=pdf_col, line_width=3, legend='pdf',
-                                 muted_color=pdf_col, muted_alpha=0.35)
-cust_func_cdf = plot_custom.line(x='x', y='y_cdf', source=source_custom,
-                                 color=cdf_col, line_width=3, legend='cdf',
-                                 muted_color=cdf_col, muted_alpha=0.35,
-                                 line_dash='dashed')
-hover_pdf = HoverTool(
-    renderers=[cust_func_pdf],
-    tooltips=[('(x, y_pdf)', '($x, @y_pdf)')],
-    # display a tooltip whenever the cursor is vertically in line with a glyph
-    mode='vline'
-)
-hover_cdf = HoverTool(
-    renderers=[cust_func_cdf],
-    tooltips=[('(x, y_cdf)', '($x, @y_cdf)')],
-    # display a tooltip whenever the cursor is vertically in line with a glyph
-    mode='vline'
-)
-plot_custom.add_tools(hover_pdf)
-plot_custom.add_tools(hover_cdf)
+d_data_uniform = {
+    'x': d_x,
+    'y_pdf': d_y_uni_pdf,
+    'y_cdf': d_y_uni_cdf
+}
+source_uniform = ColumnDataSource(data=d_data_uniform)
 
-plot_custom.legend.click_policy='mute'
+d_data_custom = {
+    'x': d_x,
+    'y_pdf': d_y_cust_pdf,
+    'y_cdf': d_y_cust_cdf
+}
+source_custom = ColumnDataSource(data=d_data_custom)
 
-# custom widgets
-sld_cust_xminmax = RangeSlider(start=r_xminmax[0], end=r_xminmax[1], value=(d_xmin, d_xmax), step=r_xminmax[2], title='[xmin, xmax]', width=450)
-sld_cust_k = Slider(start=r_erl_k[0], end=r_erl_k[1], value=d_erl_k, step=r_erl_k[2], title='k', width=450)
-sld_cust_teta = Slider(start=r_erl_teta[0], end=r_erl_teta[1], value=d_erl_teta, step=r_erl_teta[2], title='teta', width=450)
+plot_uniform = create_plot_distribution(title='Uniform distribution',
+                                        source=source_uniform)
+# uniform distribution widgets
+slider_uni_xminmax = RangeSlider(start=r_xminmax[0], end=r_xminmax[1],
+    value=(d_xmin, d_xmax), step=r_xminmax[2], title='[xmin, xmax]', width=450)
+slider_uni_ab = RangeSlider(start=r_uni_ab[0], end=r_uni_ab[1],
+    value=(d_uni_a, d_uni_b), step=r_uni_ab[2], title='[a, b]', width=450)
+
+plot_custom = create_plot_distribution(title='Erlang distribution',
+                                       source=source_custom)
+# custom distribution widgets
+slider_cust_xminmax = RangeSlider(start=r_xminmax[0], end=r_xminmax[1],
+    value=(d_xmin, d_xmax), step=r_xminmax[2], title='[xmin, xmax]', width=450)
+slider_cust_k = Slider(start=r_cust_k[0], end=r_cust_k[1], value=d_cust_k,
+    step=r_cust_k[2], title='k', width=450)
+slider_cust_teta = Slider(start=r_cust_teta[0], end=r_cust_teta[1],
+    value=d_cust_teta, step=r_cust_teta[2], title='teta', width=450)
 
 
+
+###-----------------------------------------------------------------------###
+###----------------------------CALLBACKS----------------------------------###
+### This section defines the behavior of the GUI as the user interacts    ###
+### with the controls. ("Controller")                                     ###
+###-----------------------------------------------------------------------###
 def update_uniform_data(attrname, old, new):
-    xmin, xmax = sld_uni_xminmax.value
-    a, b = sld_uni_ab.value
+    xmin, xmax = slider_uni_xminmax.value
+    a, b = slider_uni_ab.value
     scale = b - a
-    
+
     x = np.linspace(xmin, xmax, d_N)
     y_uni_pdf = uniform.pdf(x, loc=a, scale=scale)
     y_uni_cdf = uniform.cdf(x, loc=a, scale=scale)
-    
-    data_uniform = {'x': x,
-                    'y_pdf': y_uni_pdf,
-                    'y_cdf': y_uni_cdf}
 
+    data_uniform = {
+        'x': x,
+        'y_pdf': y_uni_pdf,
+        'y_cdf': y_uni_cdf
+    }
     source_uniform.data = data_uniform
 
 def update_custom_data(attrname, old, new):
-    xmin, xmax = sld_cust_xminmax.value
-    k = sld_cust_k.value
-    teta = sld_cust_teta.value
-    
+    xmin, xmax = slider_cust_xminmax.value
+    k = slider_cust_k.value
+    teta = slider_cust_teta.value
+
     x = np.linspace(xmin, xmax, d_N)
     y_cust_pdf = erlang.pdf(x, a=k, scale=teta)
     y_cust_cdf = erlang.cdf(x, a=k, scale=teta)
-    
-    data_custom = {'x': x,
-                   'y_pdf': y_cust_pdf,
-                   'y_cdf': y_cust_cdf}
 
+    data_custom = {
+        'x': x,
+        'y_pdf': y_cust_pdf,
+        'y_cdf': y_cust_cdf
+    }
     source_custom.data = data_custom
 
-for w in [sld_uni_xminmax, sld_uni_ab]:
+def reset_plot():
+    source_uniform.data = d_data_uniform
+    source_custom.data = d_data_custom
+
+    slider_uni_xminmax.value = d_xmin, d_xmax
+    slider_uni_ab.value = d_uni_a, d_uni_b
+
+    slider_cust_xminmax.value = d_xmin, d_xmax
+    slider_cust_k.value = d_cust_k
+    slider_cust_teta.value = d_cust_teta
+
+
+# attach update to uniform distribution
+for w in [slider_uni_xminmax, slider_uni_ab]:
     w.on_change('value', update_uniform_data)
 
-for w in [sld_cust_xminmax, sld_cust_k, sld_cust_teta]:
+# attach update to custom distribution
+for w in [slider_cust_xminmax, slider_cust_k, slider_cust_teta]:
     w.on_change('value', update_custom_data)
 
-curdoc().add_root(layout([
-        [plot_uniform, plot_custom],
-        [widgetbox([sld_uni_xminmax, sld_uni_ab]), widgetbox([sld_cust_xminmax, sld_cust_k, sld_cust_teta])]
-    ], sizing_mode='scale_width'))
+button_reset.on_click(reset_plot)
+
+###-----------------------------------------------------------------------###
+###----------------------------PAGE LAYOUT--------------------------------###
+### This section defines the basic layout of the GUI. ("View" Part 3)     ###
+###-----------------------------------------------------------------------###
+curdoc().add_root(
+    layout([
+        [
+            plot_uniform,
+            plot_custom
+        ],
+        [
+            widgetbox([slider_uni_xminmax, slider_uni_ab]),
+            widgetbox([slider_cust_xminmax, slider_cust_k, slider_cust_teta])
+        ],
+        [
+            button_reset
+        ]
+    ], sizing_mode='scale_width')
+)
 curdoc().title = "Distributions"
