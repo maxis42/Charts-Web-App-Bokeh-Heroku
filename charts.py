@@ -7,14 +7,28 @@ from bokeh.models.widgets import Slider, RangeSlider, TextInput
 from bokeh.plotting import figure
 from bokeh.models import HoverTool
 
-# set up data
-N = 5000
-x = np.linspace(-10, 10, N)
-y_uni_pdf = uniform.pdf(x, loc=0, scale=1)
-y_uni_cdf = uniform.cdf(x, loc=0, scale=1)
 
-y_cust_pdf = erlang.pdf(x, a=5, scale=1)
-y_cust_cdf = erlang.cdf(x, a=5, scale=1)
+###-----------------------------------------------------------------------###
+###------------------------PARAMETER DEFAULTS-----------------------------###
+### This section contains defaults and ranges for the Bokeh controls and  ###
+### may be modified without concern, if required. ("View" Part 1)         ###
+###-----------------------------------------------------------------------###
+# The format for this section is: default, range[Lower, Upper, Step Size]
+d_N = 5000 # number of points
+d_xmin, d_xmax, r_xminmax = -10, 10, [-100, 100, 0.1] # data will be generated for [xmin, xmax]
+# uniform distribution parameters
+d_uni_a, d_uni_b, r_uni_ab = 0, 1, [-20, 20, 0.1] # a, b
+# erlang distribution parameters
+d_erl_k, r_erl_k = 1, [1, 20, 1] # k
+d_erl_teta, r_erl_teta = 1, [0.1, 20, 0.1] # k
+
+
+x = np.linspace(d_xmin, d_xmax, N)
+y_uni_pdf = uniform.pdf(x, loc=d_uni_a, scale=(d_uni_b - d_uni_a))
+y_uni_cdf = uniform.cdf(x, loc=d_uni_a, scale=(d_uni_b - d_uni_a))
+
+y_cust_pdf = erlang.pdf(x, a=d_erl_k, scale=d_erl_teta)
+y_cust_cdf = erlang.cdf(x, a=d_erl_k, scale=d_erl_teta)
 
 data_uniform = {'x': x,
                 'y_pdf': y_uni_pdf,
@@ -60,8 +74,8 @@ uni_func_cdf = plot_uniform.line(x='x', y='y_cdf', source=source_uniform,
 plot_uniform.legend.click_policy='mute'
 
 # uniform widgets
-sld_uni_xminmax = RangeSlider(start=-20, end=20, value=(-1,2), step=.1, title='[xmin, xmax]', width=450)
-sld_uni_ab = RangeSlider(start=-20, end=20, value=(0,1), step=.1, title='[a, b]', width=450)
+sld_uni_xminmax = RangeSlider(start=r_xminmax[0], end=r_xminmax[1], value=(d_xmin, d_xmax), step=r_xminmax[2], title='[xmin, xmax]', width=450)
+sld_uni_ab = RangeSlider(start=r_uni_ab[0], end=r_uni_ab[1], value=(d_uni_a, d_uni_b), step=r_uni_ab[2], title='[a, b]', width=450)
 
 # custom distribution
 plot_custom = figure(title='Erlang distribution', plot_height=300, plot_width=450,
@@ -85,9 +99,9 @@ cust_func_cdf = plot_custom.line(x='x', y='y_cdf', source=source_custom,
 plot_custom.legend.click_policy='mute'
 
 # custom widgets
-sld_cust_xminmax = RangeSlider(start=-20, end=20, value=(-1,2), step=.1, title='[xmin, xmax]', width=450)
-sld_cust_k = Slider(start=1, end=20, value=1, step=1, title='k', width=450)
-sld_cust_teta = Slider(start=0.1, end=20, value=1, step=0.1, title='teta', width=450)
+sld_cust_xminmax = RangeSlider(start=r_xminmax[0], end=r_xminmax[1], value=(d_xmin, d_xmax), step=r_xminmax[2], title='[xmin, xmax]', width=450)
+sld_cust_k = Slider(start=r_erl_k[0], end=r_erl_k[1], value=d_erl_k, step=r_erl_k[2], title='k', width=450)
+sld_cust_teta = Slider(start=r_erl_teta[0], end=r_erl_teta[1], value=d_erl_teta, step=r_erl_teta[2], title='teta', width=450)
 
 
 def update_uniform_data(attrname, old, new):
