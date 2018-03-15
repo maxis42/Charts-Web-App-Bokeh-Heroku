@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
 from scipy.stats import uniform, erlang
 from bokeh.io import curdoc, show
@@ -108,15 +110,15 @@ d_y_cust_cdf = erlang.cdf(d_x, a=d_cust_k, scale=d_cust_teta)
 
 d_data_uniform = {
     'x': d_x,
-    'y_плотность': d_y_uni_pdf,
-    'y_функция': d_y_uni_cdf
+    'y_pdf': d_y_uni_pdf,
+    'y_cdf': d_y_uni_cdf
 }
 source_uniform = ColumnDataSource(data=d_data_uniform)
 
 d_data_custom = {
     'x': d_x,
-    'y_плотность': d_y_cust_pdf,
-    'y_функция': d_y_cust_cdf
+    'y_pdf': d_y_cust_pdf,
+    'y_cdf': d_y_cust_cdf
 }
 source_custom = ColumnDataSource(data=d_data_custom)
 
