@@ -108,31 +108,31 @@ d_y_cust_cdf = erlang.cdf(d_x, a=d_cust_k, scale=d_cust_teta)
 
 d_data_uniform = {
     'x': d_x,
-    'y_pdf': d_y_uni_pdf,
-    'y_cdf': d_y_uni_cdf
+    'y_плотность': d_y_uni_pdf,
+    'y_функция': d_y_uni_cdf
 }
 source_uniform = ColumnDataSource(data=d_data_uniform)
 
 d_data_custom = {
     'x': d_x,
-    'y_pdf': d_y_cust_pdf,
-    'y_cdf': d_y_cust_cdf
+    'y_плотность': d_y_cust_pdf,
+    'y_функция': d_y_cust_cdf
 }
 source_custom = ColumnDataSource(data=d_data_custom)
 
-plot_uniform = create_plot_distribution(title='Uniform distribution',
+plot_uniform = create_plot_distribution(title='Равномерное распределение',
                                         source=source_uniform)
 # uniform distribution widgets
 slider_uni_xminmax = RangeSlider(start=r_xminmax[0], end=r_xminmax[1],
-    value=(d_xmin, d_xmax), step=r_xminmax[2], title='[xmin, xmax]', width=450)
+    value=(d_xmin, d_xmax), step=r_xminmax[2], title='[x_мин, x_макс]', width=450)
 slider_uni_ab = RangeSlider(start=r_uni_ab[0], end=r_uni_ab[1],
     value=(d_uni_a, d_uni_b), step=r_uni_ab[2], title='[a, b]', width=450)
 
-plot_custom = create_plot_distribution(title='Erlang distribution',
+plot_custom = create_plot_distribution(title='Распределение Эрланга',
                                        source=source_custom)
 # custom distribution widgets
 slider_cust_xminmax = RangeSlider(start=r_xminmax[0], end=r_xminmax[1],
-    value=(d_xmin, d_xmax), step=r_xminmax[2], title='[xmin, xmax]', width=450)
+    value=(d_xmin, d_xmax), step=r_xminmax[2], title='[x_мин, x_макс]', width=450)
 slider_cust_k = Slider(start=r_cust_k[0], end=r_cust_k[1], value=d_cust_k,
     step=r_cust_k[2], title='k', width=450)
 slider_cust_teta = Slider(start=r_cust_teta[0], end=r_cust_teta[1],
@@ -218,4 +218,4 @@ curdoc().add_root(
         ]
     ], sizing_mode='scale_width')
 )
-curdoc().title = "Distributions"
+curdoc().title = "Распределения"
