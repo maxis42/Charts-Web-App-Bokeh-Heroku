@@ -62,22 +62,22 @@ def create_plot_distribution(title, source):
     pdf_line_color = 'DarkBlue'
     cdf_line_color = 'YellowGreen'
     line_pdf = plot_figure.line(x='x', y='y_pdf', source=source,
-        color=pdf_line_color, line_width=3, legend='pdf',
+        color=pdf_line_color, line_width=3, legend='плотность',
         muted_color=pdf_line_color, muted_alpha=0.2)
     line_cdf = plot_figure.line(x='x', y='y_cdf', source=source,
-        color=cdf_line_color, line_width=3, legend='cdf',
+        color=cdf_line_color, line_width=3, legend='функция',
         muted_color=cdf_line_color, muted_alpha=0.2,
         line_dash='dashed')
 
     # create custom HoverTools separately for pdf and cdf
     hover_pdf = HoverTool(
         renderers=[line_pdf],
-        tooltips=[('(x, y_pdf)', '($x, @y_pdf)')],
+        tooltips=[('(x, y_плотность)', '($x, @y_pdf)')],
         mode='vline'
     )
     hover_cdf = HoverTool(
         renderers=[line_cdf],
-        tooltips=[('(x, y_cdf)', '($x, @y_cdf)')],
+        tooltips=[('(x, y_функция)', '($x, @y_cdf)')],
         mode='vline'
     )
     plot_figure.add_tools(hover_pdf)
