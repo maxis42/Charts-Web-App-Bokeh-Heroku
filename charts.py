@@ -87,7 +87,7 @@ def create_plot_distribution(title, source):
     plot_figure.legend.click_policy='mute'
     return plot_figure
 
-button_reset = Button(label="Reset charts")
+button_reset = Button(label="Начальные настройки")
 
 
 
